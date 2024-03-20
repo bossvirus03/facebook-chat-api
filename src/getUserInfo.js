@@ -7,7 +7,7 @@ function formatData(data) {
   var retObj = {};
 
   for (var prop in data) {
-    if (data.hasOwnProperty(prop)) {
+    if (Object.prototype.hasOwnProperty.call(data, prop)) {
       var innerObj = data[prop];
       retObj[prop] = {
         name: innerObj.name,
@@ -18,7 +18,7 @@ function formatData(data) {
         gender: innerObj.gender,
         type: innerObj.type,
         isFriend: innerObj.is_friend,
-        isBirthday: !!innerObj.is_birthday
+        isBirthday: !!innerObj.is_birthday,
       };
     }
   }
@@ -26,7 +26,7 @@ function formatData(data) {
   return retObj;
 }
 
-module.exports = function(defaultFuncs, api, ctx) {
+module.exports = function (defaultFuncs, api, ctx) {
   return function getUserInfo(id, callback) {
     if (!callback) {
       throw { error: "getUserInfo: need callback" };
@@ -37,23 +37,23 @@ module.exports = function(defaultFuncs, api, ctx) {
     }
 
     var form = {};
-    id.map(function(v, i) {
+    id.map(function (v, i) {
       form["ids[" + i + "]"] = v;
     });
     const response = defaultFuncs
       .post("https://www.facebook.com/chat/user_info/", ctx.jar, form)
       .then(utils.parseAndCheckLogin(ctx, defaultFuncs))
-      .then(function(resData) {
+      .then(function (resData) {
         if (resData.error) {
           throw resData;
         }
         callback(null, formatData(resData.payload.profiles));
-        return resData.payload.profiles
+        return resData.payload.profiles;
       })
-      .catch(function(err) {
+      .catch(function (err) {
         log.error("getUserInfo", err);
         return callback(err);
       });
-      return response;
+    return response;
   };
 };
