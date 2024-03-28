@@ -122,7 +122,8 @@ function buildAPI(globalOptions, html, jar) {
     'setTitle',
     'threadColors',
     'unsendMessage',
-
+    'shareContact',
+    'editMessage',
     // Deprecated features
     "getThreadListDeprecated",
     'getThreadHistoryDeprecated',
@@ -183,7 +184,7 @@ function makeLogin(jar, email, password, loginOptions, callback) {
     });
     // ---------- Very Hacky Part Ends -----------------
 
-    log.info("login", "Logging in...");
+    log.info("login", "Đang tiến hành đăng nhập...");
     return utils
       .post("https://www.facebook.com/login.php?login_attempt=1&lwv=110", jar, form, loginOptions)
       .then(utils.saveCookies(jar))
@@ -356,7 +357,7 @@ function loginHelper(appState, email, password, globalOptions, callback) {
       var form = {
         reason: 6
       };
-      log.info("login", 'Request to reconnect');
+      log.info("login", 'Yêu cầu kết nối lại');
       return defaultFuncs
         .get("https://www.facebook.com/ajax/presence/reconnect.php", ctx.jar, form)
         .then(utils.saveCookies(ctx.jar));
@@ -390,7 +391,7 @@ function loginHelper(appState, email, password, globalOptions, callback) {
   // At the end we call the callback or catch an exception
   mainPromise
     .then(function() {
-      log.info("login", 'Done logging in.');
+      log.info("login", 'Đăng nhập thành công.');
       return callback(null, api);
     })
     .catch(function(e) {
