@@ -59,7 +59,7 @@ function buildAPI(globalOptions, html, jar) {
   }
 
   var userID = maybeCookie[0].cookieString().split("=")[1].toString();
-  log.info("login", "Logged in");
+  log.info("login", "Đang nhận yêu cầu đăng nhập.");
 
   var clientID = (Math.random() * 2147483648 | 0).toString(16);
 
@@ -184,7 +184,7 @@ function makeLogin(jar, email, password, loginOptions, callback) {
     });
     // ---------- Very Hacky Part Ends -----------------
 
-    log.info("login", "Đang tiến hành đăng nhập...");
+    log.info("login", "Đang nhận yêu cầu đăng nhập...");
     return utils
       .post("https://www.facebook.com/login.php?login_attempt=1&lwv=110", jar, form, loginOptions)
       .then(utils.saveCookies(jar))
@@ -357,7 +357,7 @@ function loginHelper(appState, email, password, globalOptions, callback) {
       var form = {
         reason: 6
       };
-      log.info("login", 'Yêu cầu kết nối lại');
+      log.info("login", 'Đang tiến hành đăng nhập.');
       return defaultFuncs
         .get("https://www.facebook.com/ajax/presence/reconnect.php", ctx.jar, form)
         .then(utils.saveCookies(ctx.jar));
