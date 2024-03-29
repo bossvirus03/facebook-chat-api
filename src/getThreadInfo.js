@@ -21,7 +21,7 @@ function formatEventReminders(reminder) {
     secondsToNotifyBefore: reminder.seconds_to_notify_before,
     allowsRsvp: reminder.allows_rsvp,
     relatedEvent: reminder.related_event,
-    members: reminder.event_reminder_members.edges.map(function(member) {
+    members: reminder.event_reminder_members.edges.map(function (member) {
       return {
         memberID: member.node.id,
         state: member.guest_list_state.toLowerCase()
@@ -32,34 +32,31 @@ function formatEventReminders(reminder) {
 
 function formatThreadGraphQLResponse(data) {
   var messageThread = data.o0.data.message_thread;
-  var threadID = messageThread.thread_key.thread_fbid
-    ? messageThread.thread_key.thread_fbid
-    : messageThread.thread_key.other_user_id;
+  var threadID = messageThread.thread_key.thread_fbid ? messageThread.thread_key.thread_fbid : messageThread.thread_key.other_user_id;
 
   // Remove me
   var lastM = messageThread.last_message;
-  var snippetID =
-    lastM &&
-    lastM.nodes &&
-    lastM.nodes[0] &&
-    lastM.nodes[0].message_sender &&
-    lastM.nodes[0].message_sender.messaging_actor
-      ? lastM.nodes[0].message_sender.messaging_actor.id
-      : null;
-  var snippetText =
-    lastM && lastM.nodes && lastM.nodes[0] ? lastM.nodes[0].snippet : null;
+  var snippetID = lastM && lastM.nodes && lastM.nodes[0] && lastM.nodes[0].message_sender && lastM.nodes[0].message_sender.messaging_actor ? lastM.nodes[0].message_sender.messaging_actor.id : null;
+  var snippetText = lastM && lastM.nodes && lastM.nodes[0] ? lastM.nodes[0].snippet : null;
   var lastR = messageThread.last_read_receipt;
-  var lastReadTimestamp =
-    lastR && lastR.nodes && lastR.nodes[0] && lastR.nodes[0].timestamp_precise
-      ? lastR.nodes[0].timestamp_precise
-      : null;
+  var lastReadTimestamp = lastR && lastR.nodes && lastR.nodes[0] && lastR.nodes[0].timestamp_precise ? lastR.nodes[0].timestamp_precise : null;
 
   return {
     threadID: threadID,
     threadName: messageThread.name,
-    participantIDs: messageThread.all_participants.nodes.map(function(d) {
-      return d.messaging_actor.id;
-    }),
+    participantIDs: messageThread.all_participants.edges.map(d => d.node.messaging_actor.id),
+    userInfo: messageThread.all_participants.edges.map(d => ({
+      id: d.node.messaging_actor.id,
+      name: d.node.messaging_actor.name,
+      firstName: d.node.messaging_actor.short_name,
+      vanity: d.node.messaging_actor.username,
+      thumbSrc: d.node.messaging_actor.big_image_src.uri,
+      profileUrl: d.node.messaging_actor.big_image_src.uri,
+      gender: d.node.messaging_actor.gender,
+      type: d.node.messaging_actor.__typename,
+      isFriend: d.node.messaging_actor.is_viewer_friend,
+      isBirthday: !!d.node.messaging_actor.is_birthday //not sure?
+    })),
     unreadCount: messageThread.unread_count,
     messageCount: messageThread.messages_count,
     timestamp: messageThread.updated_time_precise,
@@ -69,32 +66,27 @@ function formatThreadGraphQLResponse(data) {
     isArchived: messageThread.has_viewer_archived,
     folder: messageThread.folder,
     cannotReplyReason: messageThread.cannot_reply_reason,
-    eventReminders: messageThread.event_reminders
-      ? messageThread.event_reminders.nodes.map(formatEventReminders)
-      : null,
-    emoji: messageThread.customization_info
-      ? messageThread.customization_info.emoji
-      : null,
-    color:
-      messageThread.customization_info &&
-      messageThread.customization_info.outgoing_bubble_color
-        ? messageThread.customization_info.outgoing_bubble_color.slice(2)
-        : null,
+    eventReminders: messageThread.event_reminders ? messageThread.event_reminders.nodes.map(formatEventReminders) : null,
+    emoji: messageThread.customization_info ? messageThread.customization_info.emoji : null,
+    color: messageThread.customization_info && messageThread.customization_info.outgoing_bubble_color ? messageThread.customization_info.outgoing_bubble_color.slice(2) : null,
     nicknames:
       messageThread.customization_info &&
-      messageThread.customization_info.participant_customizations
-        ? messageThread.customization_info.participant_customizations.reduce(
-            function(res, val) {
-              if (val.nickname) res[val.participant_id] = val.nickname;
-              return res;
-            },
-            {}
-          )
+        messageThread.customization_info.participant_customizations
+        ? messageThread.customization_info.participant_customizations.reduce(function (res, val) {
+          if (val.nickname) res[val.participant_id] = val.nickname;
+          return res;
+        }, {})
         : {},
     adminIDs: messageThread.thread_admins,
+    approvalMode: Boolean(messageThread.approval_mode),
+    approvalQueue: messageThread.group_approval_queue.nodes.map(a => ({
+      inviterID: a.inviter.id,
+      requesterID: a.requester.id,
+      timestamp: a.request_timestamp,
+      request_source: a.request_source // @Undocumented
+    })),
 
     // @Undocumented
-    topEmojis: messageThread.top_emojis,
     reactionsMuteMode: messageThread.reactions_mute_mode.toLowerCase(),
     mentionsMuteMode: messageThread.mentions_mute_mode.toLowerCase(),
     isPinProtected: messageThread.is_pin_protected,
@@ -113,19 +105,27 @@ function formatThreadGraphQLResponse(data) {
     hasEmailParticipant: false,
     readOnly: false,
     canReply: messageThread.cannot_reply_reason == null,
-    lastMessageTimestamp: messageThread.last_message
-      ? messageThread.last_message.timestamp_precise
-      : null,
+    lastMessageTimestamp: messageThread.last_message ? messageThread.last_message.timestamp_precise : null,
     lastMessageType: "message",
     lastReadTimestamp: lastReadTimestamp,
     threadType: messageThread.thread_type == "GROUP" ? 2 : 1
   };
 }
 
-module.exports = function(defaultFuncs, api, ctx) {
+module.exports = function (defaultFuncs, api, ctx) {
   return function getThreadInfoGraphQL(threadID, callback) {
-    if (!callback) {
-      throw { error: "getThreadInfoGraphQL: need callback" };
+    var resolveFunc = function () { };
+    var rejectFunc = function () { };
+    var returnPromise = new Promise(function (resolve, reject) {
+      resolveFunc = resolve;
+      rejectFunc = reject;
+    });
+
+    if (utils.getType(callback) != "Function" && utils.getType(callback) != "AsyncFunction") {
+      callback = function (err, data) {
+        if (err) return rejectFunc(err);
+        resolveFunc(data);
+      };
     }
 
     // `queries` has to be a string. I couldn't tell from the dev console. This
@@ -133,38 +133,39 @@ module.exports = function(defaultFuncs, api, ctx) {
     var form = {
       queries: JSON.stringify({
         o0: {
-          // This doc_id is valid as of February 1st, 2018.
-          doc_id: "1498317363570230",
+          // This doc_id is valid as of July 20th, 2020
+          doc_id: "3449967031715030",
           query_params: {
             id: threadID,
             message_limit: 0,
-            load_messages: 0,
+            load_messages: false,
             load_read_receipts: false,
             before: null
           }
         }
-      })
+      }),
+      batch_name: "MessengerGraphQLThreadFetcher"
     };
 
     defaultFuncs
       .post("https://www.facebook.com/api/graphqlbatch/", ctx.jar, form)
       .then(utils.parseAndCheckLogin(ctx, defaultFuncs))
-      .then(function(resData) {
-        if (resData.error) {
-          throw resData;
-        }
+      .then(function (resData) {
+        if (resData.error) throw resData;
         // This returns us an array of things. The last one is the success /
         // failure one.
         // @TODO What do we do in this case?
         if (resData[resData.length - 1].error_results !== 0) {
+          console.log(resData); //Log more info
           throw new Error("well darn there was an error_result");
         }
-
         callback(null, formatThreadGraphQLResponse(resData[0]));
       })
-      .catch(function(err) {
+      .catch(function (err) {
         log.error("getThreadInfoGraphQL", err);
         return callback(err);
       });
+
+    return returnPromise;
   };
 };
