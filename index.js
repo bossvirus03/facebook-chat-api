@@ -85,17 +85,14 @@ function buildAPI(globalOptions, html, jar) {
   };
 
   const apiFuncNames = [
-'addExternalModule',
     'addUserToGroup',
     'changeAdminStatus',
     'changeArchivedStatus',
-    'changeBio',
     'changeBlockedStatus',
     'changeGroupImage',
     'changeNickname',
     'changeThreadColor',
     'changeThreadEmoji',
-    'createNewGroup',
     'createPoll',
     'deleteMessage',
     'deleteThread',
@@ -115,7 +112,6 @@ function buildAPI(globalOptions, html, jar) {
     'markAsDelivered',
     'markAsRead',
     'markAsReadAll',
-    'markAsSeen',
     'muteThread',
     'removeUserFromGroup',
     'resolvePhotoUrl',
@@ -126,12 +122,6 @@ function buildAPI(globalOptions, html, jar) {
     'setTitle',
     'threadColors',
     'unsendMessage',
-    'unfriend',
-    'shareContact',
-    'editMessage',
-    // HTTP
-    'httpGet',
-    'httpPost',
 
     // Deprecated features
     "getThreadListDeprecated",
