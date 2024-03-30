@@ -4,7 +4,7 @@ var utils = require("../utils");
 var log = require("npmlog");
 var bluebird = require("bluebird");
 
-module.exports = function(defaultFuncs, api, ctx) {
+module.exports = function (defaultFuncs, api, ctx) {
   function handleUpload(image, callback) {
     var uploads = [];
 
@@ -15,17 +15,10 @@ module.exports = function(defaultFuncs, api, ctx) {
 
     uploads.push(
       defaultFuncs
-        .postFormData(
-          "https://upload.facebook.com/ajax/mercury/upload.php",
-          ctx.jar,
-          form,
-          {}
-        )
+        .postFormData("https://upload.facebook.com/ajax/mercury/upload.php", ctx.jar, form, {})
         .then(utils.parseAndCheckLogin(ctx, defaultFuncs))
-        .then(function(resData) {
-          if (resData.error) {
-            throw resData;
-          }
+        .then(function (resData) {
+          if (resData.error) throw resData;
 
           return resData.payload.metadata[0];
         })
@@ -34,26 +27,28 @@ module.exports = function(defaultFuncs, api, ctx) {
     // resolve all promises
     bluebird
       .all(uploads)
-      .then(function(resData) {
-        callback(null, resData);
-      })
-      .catch(function(err) {
+      .then(resData => callback(null, resData))
+      .catch(function (err) {
         log.error("handleUpload", err);
         return callback(err);
       });
   }
 
   return function changeGroupImage(image, threadID, callback) {
-    if (
-      !callback &&
-      (utils.getType(threadID) === "Function" ||
-        utils.getType(threadID) === "AsyncFunction")
-    ) {
-      throw { error: "please pass a threadID as a second argument." };
-    }
+    if (!callback && (utils.getType(threadID) === "Function" || utils.getType(threadID) === "AsyncFunction")) throw { error: "please pass a threadID as a second argument." };
+
+    var resolveFunc = function () { };
+    var rejectFunc = function () { };
+    var returnPromise = new Promise(function (resolve, reject) {
+      resolveFunc = resolve;
+      rejectFunc = reject;
+    });
 
     if (!callback) {
-      callback = function() {};
+      callback = function (err) {
+        if (err) return rejectFunc(err);
+        resolveFunc();
+      };
     }
 
     var messageAndOTID = utils.generateOfflineThreadingID();
@@ -86,10 +81,8 @@ module.exports = function(defaultFuncs, api, ctx) {
       timestamp_time_passed: "0"
     };
 
-    handleUpload(image, function(err, payload) {
-      if (err) {
-        return callback(err);
-      }
+    handleUpload(image, function (err, payload) {
+      if (err) return callback(err);
 
       form["thread_image_id"] = payload[0]["image_id"];
       form["thread_id"] = threadID;
@@ -97,19 +90,17 @@ module.exports = function(defaultFuncs, api, ctx) {
       defaultFuncs
         .post("https://www.facebook.com/messaging/set_thread_image/", ctx.jar, form)
         .then(utils.parseAndCheckLogin(ctx, defaultFuncs))
-        .then(function(resData) {
+        .then(function (resData) {
           // check for errors here
-
-          if (resData.error) {
-            throw resData;
-          }
-
+          if (resData.error) throw resData;
           return callback();
         })
-        .catch(function(err) {
+        .catch(function (err) {
           log.error("changeGroupImage", err);
           return callback(err);
         });
     });
+
+    return returnPromise;
   };
 };

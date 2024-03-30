@@ -6,6 +6,13 @@ var log = require("npmlog");
 module.exports = function(defaultFuncs, api, ctx) {
   return function editMessage(text, messageID, callback) {
     let reqID = ctx.wsReqNumber+1;
+    var resolveFunc = function() {};
+    var rejectFunc = function() {};
+    var returnPromise = new Promise(function (resolve, reject) {
+      resolveFunc = resolve;
+      rejectFunc = reject;
+    });
+
     if (!callback) {
       callback = function (err, data) {
         if (err) {
@@ -68,5 +75,7 @@ module.exports = function(defaultFuncs, api, ctx) {
       }
     }
     ctx.mqttClient.on('message', handleRes);
+    
+    return returnPromise;
   };
 }

@@ -25,7 +25,7 @@ It will download facebook-chat-api from NPM repositories
 ### Bleeding edge
 If you want to use bleeding edge (directly from github) to test new features or submit bug report, this is the command for you:
 ```bash
-npm install bossvirus03/facebook-chat-api
+npm install Schmavery/facebook-chat-api
 ```
 
 ## Testing your bots
