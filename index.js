@@ -122,6 +122,8 @@ function buildAPI(globalOptions, html, jar) {
     'setTitle',
     'threadColors',
     'unsendMessage',
+    "shareContact",
+    "editMessage",
 
     // Deprecated features
     "getThreadListDeprecated",
