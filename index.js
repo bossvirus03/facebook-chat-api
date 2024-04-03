@@ -129,7 +129,7 @@ function buildAPI(globalOptions, html, jar) {
     'unfriend',
     'shareContact',
     'editMessage',
-    "fbDownloader",
+    // "fbDownloader",
     // HTTP
     'httpGet',
     'httpPost',
