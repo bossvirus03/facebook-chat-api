@@ -1,10 +1,4 @@
-/**
- * @fix by NTKhang
- * update as Thursday, 10 February 2022
- * do not remove the author name to get more updates
- */
-
- "use strict";
+"use strict";
 
  var utils = require("../utils");
  var log = require("npmlog");

@@ -90,6 +90,7 @@ function buildAPI(globalOptions, html, jar) {
     'changeAdminStatus',
     'changeArchivedStatus',
     'changeBio',
+    'changeAvt',
     'changeBlockedStatus',
     'changeGroupImage',
     'changeNickname',
@@ -129,11 +130,11 @@ function buildAPI(globalOptions, html, jar) {
     'unfriend',
     'shareContact',
     'editMessage',
-    // "fbDownloader",
     // HTTP
     'httpGet',
     'httpPost',
-
+    "postTextStory",
+    "postPhotoStory",
     // Deprecated features
     "getThreadListDeprecated",
     'getThreadHistoryDeprecated',
