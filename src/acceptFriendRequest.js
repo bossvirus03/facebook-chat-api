@@ -3,16 +3,20 @@
 const utils = require("../utils");
 const log = require("npmlog");
 
-module.exports = function (defaultFuncs, api, ctx) {
-  return async function handleFriendRequest(userID, accept) {
+module.exports = function(defaultFuncs, api, ctx) {
+  return async function acceptFriendRequest(userID, accept) {
     if (!utils.isOfType(userID, ["Number", "String"])) {
       throw new utils.FcaError({
-        error: `The first argument (userID) must be a Number or String, not ${utils.getType(userID)} (${userID}).`
+        error: `The first argument (userID) must be a Number or String, not ${utils.getType(
+          userID
+        )} (${userID}).`,
       });
     }
     if (utils.getType(accept) !== "Boolean") {
       throw new utils.FcaError({
-        error: `The second argument (accept) must be a Boolean, not ${utils.getType(accept)} (${accept}).`
+        error: `The second argument (accept) must be a Boolean, not ${utils.getType(
+          accept
+        )} (${accept}).`,
       });
     }
 
@@ -25,12 +29,12 @@ module.exports = function (defaultFuncs, api, ctx) {
           friend_requester_id: String(userID),
           source: "friends_tab",
           actor_id: ctx.i_userID || ctx.userID,
-          client_mutation_id: Math.round(Math.random() * 1024).toString()
+          client_mutation_id: Math.round(Math.random() * 1024).toString(),
         },
         scale: 1,
-        refresh_num: 0
+        refresh_num: 0,
       }),
-      av: ctx.i_userID || ctx.userID
+      av: ctx.i_userID || ctx.userID,
     };
 
     try {
